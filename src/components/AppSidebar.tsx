@@ -9,7 +9,8 @@ import {
   Plus,
   Timer,
   FileText,
-  Users
+  Users,
+  Settings as SettingsIcon
 } from 'lucide-react';
 
 type View = 'dashboard' | 'calendar' | 'subjects' | 'settings' | 'tools' | 'profile' | 'notes';
@@ -81,17 +82,27 @@ export default function AppSidebar({ currentView, onViewChange, streak, onCreate
         <div className={cn("h-[1px] bg-white/5 my-2 mx-auto", isExpanded ? "w-full" : "w-8")} />
         
         {[
-          { icon: Users, label: 'Community' }
+          { icon: Users, label: 'Community' },
+          { icon: SettingsIcon, label: 'Settings', view: 'profile' }
         ].map((item, i) => (
           <button 
             key={i}
+            onClick={() => item.view && onViewChange(item.view as View)}
             className={cn(
-              "h-12 flex items-center text-muted-foreground hover:bg-white/5 transition-all rounded-2xl shrink-0",
-              isExpanded ? "w-full px-3 gap-4" : "w-12 justify-center mx-auto"
+              "h-12 flex items-center transition-all rounded-2xl shrink-0",
+              isExpanded ? "w-full px-3 gap-4" : "w-12 justify-center mx-auto",
+              item.view && currentView === item.view 
+                ? 'bg-primary/10 text-primary' 
+                : 'text-muted-foreground hover:bg-white/5'
             )}
           >
             <item.icon className="h-6 w-6 shrink-0" />
             {isExpanded && <span className="font-semibold text-sm truncate">{item.label}</span>}
+            {!isExpanded && (
+              <span className="absolute left-16 bg-popover text-popover-foreground px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[100] border border-border">
+                {item.label}
+              </span>
+            )}
           </button>
         ))}
       </nav>
