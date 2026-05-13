@@ -33,3 +33,12 @@ export interface StreakData {
   longest_streak: number;
   last_study_date: string | null;
 }
+
+export interface Note {
+  id: string;
+  user_id: string;
+  subject_id: string | null;
+  title: string;
+  content: string;
+  last_updated: string;
+}

@@ -87,4 +87,38 @@ export const api = {
     });
     if (!res.ok) throw new Error('Failed to save streak');
   },
+
+  // Notes
+  getNotes: async (userId: string) => {
+    const res = await fetch(`${API_BASE}/notes/${userId}`);
+    if (!res.ok) throw new Error('Failed to fetch notes');
+    return res.json();
+  },
+
+  createNote: async (userId: string, note: any) => {
+    const res = await fetch(`${API_BASE}/notes/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error('Failed to create note');
+    return data;
+  },
+
+  updateNote: async (userId: string, noteId: string, note: any) => {
+    const res = await fetch(`${API_BASE}/notes/${userId}/${noteId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note }),
+    });
+    if (!res.ok) throw new Error('Failed to update note');
+  },
+
+  deleteNote: async (userId: string, noteId: string) => {
+    const res = await fetch(`${API_BASE}/notes/${userId}/${noteId}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete note');
+  },
 };

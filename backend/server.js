@@ -203,6 +203,61 @@ app.put('/api/streaks/:userId', async (req, res) => {
   }
 });
 
+// ==========================================
+// Notes Routes
+// ==========================================
+
+app.get('/api/notes/:userId', async (req, res) => {
+  try {
+    const notes = await db.query('SELECT * FROM notes WHERE user_id = $1 ORDER BY last_updated DESC', [req.params.userId]);
+    res.json(notes.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/notes/:userId', async (req, res) => {
+  const { note } = req.body;
+  const userId = req.params.userId;
+
+  try {
+    const id = note.id || uuidv4();
+    await db.query(`
+      INSERT INTO notes (id, user_id, subject_id, title, content)
+      VALUES ($1, $2, $3, $4, $5)
+    `, [id, userId, note.subject_id, note.title, note.content]);
+    res.json({ id, success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/notes/:userId/:noteId', async (req, res) => {
+  const { note } = req.body;
+  const userId = req.params.userId;
+  const noteId = req.params.noteId;
+
+  try {
+    await db.query(`
+      UPDATE notes 
+      SET title = $1, content = $2, subject_id = $3, last_updated = CURRENT_TIMESTAMP
+      WHERE id = $4 AND user_id = $5
+    `, [note.title, note.content, note.subject_id, noteId, userId]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/notes/:userId/:noteId', async (req, res) => {
+  try {
+    await db.query('DELETE FROM notes WHERE id = $1 AND user_id = $2', [req.params.noteId, req.params.userId]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`\n  ✅ Backend server running at http://localhost:${PORT}\n`);

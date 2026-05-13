@@ -6,6 +6,7 @@ import SubjectManager from '@/components/SubjectManager';
 import SettingsPanel from '@/components/SettingsPanel';
 import StudyTools from '@/components/StudyTools';
 import ProfilePanel from '@/components/ProfilePanel';
+import NotesManager from '@/components/NotesManager';
 import { UserNav } from '@/components/UserNav';
 import { useStudyPlanner } from '@/hooks/useStudyPlanner';
 import { Search, Bell, Calendar as CalendarIcon } from 'lucide-react';
@@ -13,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/components/AuthContext';
 
-type View = 'dashboard' | 'calendar' | 'subjects' | 'settings' | 'tools' | 'profile';
+type View = 'dashboard' | 'calendar' | 'subjects' | 'settings' | 'tools' | 'profile' | 'notes';
 
 const Index = () => {
   const [view, setView] = useState<View>('dashboard');
@@ -105,6 +106,7 @@ const Index = () => {
               />
             )}
             {view === 'profile' && <ProfilePanel />}
+            {view === 'notes' && <NotesManager subjects={planner.subjects} />}
           </div>
         </main>
 

@@ -8,15 +8,11 @@ import {
   Flame,
   Plus,
   Timer,
-  Bell,
-  MessageSquare,
   FileText,
-  Users,
-  ChevronRight,
-  Menu
+  Users
 } from 'lucide-react';
 
-type View = 'dashboard' | 'calendar' | 'subjects' | 'settings' | 'tools' | 'profile';
+type View = 'dashboard' | 'calendar' | 'subjects' | 'settings' | 'tools' | 'profile' | 'notes';
 
 interface SidebarProps {
   currentView: View;
@@ -29,6 +25,7 @@ const navItems: { view: View; icon: React.ElementType; label: string }[] = [
   { view: 'dashboard', icon: LayoutGrid, label: 'Dashboard' },
   { view: 'calendar', icon: CalendarDays, label: 'Calendar' },
   { view: 'subjects', icon: BookOpen, label: 'Subjects' },
+  { view: 'notes', icon: FileText, label: 'Notes' },
   { view: 'tools', icon: Timer, label: 'Tools' },
   { view: 'settings', icon: CalendarClock, label: 'Time Table Generator' },
 ];
@@ -84,7 +81,6 @@ export default function AppSidebar({ currentView, onViewChange, streak, onCreate
         <div className={cn("h-[1px] bg-white/5 my-2 mx-auto", isExpanded ? "w-full" : "w-8")} />
         
         {[
-          { icon: FileText, label: 'Notes' },
           { icon: Users, label: 'Community' }
         ].map((item, i) => (
           <button 
