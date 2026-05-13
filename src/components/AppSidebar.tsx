@@ -84,7 +84,6 @@ export default function AppSidebar({ currentView, onViewChange, streak, onCreate
         <div className={cn("h-[1px] bg-white/5 my-2 mx-auto", isExpanded ? "w-full" : "w-8")} />
         
         {[
-          { icon: MessageSquare, label: 'Messages' },
           { icon: FileText, label: 'Notes' },
           { icon: Users, label: 'Community' }
         ].map((item, i) => (
