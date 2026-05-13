@@ -62,7 +62,7 @@ export function UserNav({ onViewChange }: { onViewChange?: (view: any) => void }
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" onClick={() => onViewChange?.('settings')}>
             <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
+            <span>Time Table Generator</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

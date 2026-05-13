@@ -24,7 +24,7 @@ export default function SettingsPanel({
 }: SettingsPanelProps) {
   return (
     <div className="space-y-6 animate-fade-in max-w-xl">
-      <h2 className="text-lg font-semibold">Study Settings</h2>
+      <h2 className="text-lg font-semibold">Time Table Generator</h2>
 
       <Card className="p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">

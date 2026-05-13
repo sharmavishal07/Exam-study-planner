@@ -24,7 +24,7 @@ const navItems: { view: View; label: string; icon: React.ElementType }[] = [
   { view: 'calendar', label: 'Calendar', icon: CalendarDays },
   { view: 'subjects', label: 'Subjects', icon: BookOpen },
   { view: 'tools', label: 'Study Tools', icon: Timer },
-  { view: 'settings', label: 'Settings', icon: Settings },
+  { view: 'settings', label: 'Time Table Generator', icon: Settings },
 ];
 
 export default function AppSidebar({ currentView, onViewChange, streak, onCreateClick }: SidebarProps) {

@@ -4,17 +4,20 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('./database');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// Initialize database
+db.initDb();
 
 // ==========================================
 // Auth Routes
 // ==========================================
 
 // Sign Up
-app.post('/api/auth/signup', (req, res) => {
+app.post('/api/auth/signup', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -24,66 +27,72 @@ app.post('/api/auth/signup', (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 6 characters' });
   }
 
-  // Check if user already exists
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-  if (existing) {
-    return res.status(409).json({ error: 'User with this email already exists' });
+  try {
+    // Check if user already exists
+    const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'User with this email already exists' });
+    }
+
+    const id = uuidv4();
+    await db.query('INSERT INTO users (id, email, password) VALUES ($1, $2, $3)', [id, email, password]);
+
+    res.json({ id, email });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  const id = uuidv4();
-  db.prepare('INSERT INTO users (id, email, password) VALUES (?, ?, ?)').run(id, email, password);
-
-  res.json({ id, email });
 });
 
 // Login
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
-  const user = db.prepare('SELECT id, email FROM users WHERE email = ? AND password = ?').get(email, password);
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid email or password' });
-  }
+  try {
+    const user = await db.query('SELECT id, email FROM users WHERE email = $1 AND password = $2', [email, password]);
+    if (user.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
-  res.json(user);
+    res.json(user.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ==========================================
 // Subjects Routes
 // ==========================================
 
-app.get('/api/subjects/:userId', (req, res) => {
-  const subjects = db.prepare('SELECT * FROM subjects WHERE user_id = ?').all(req.params.userId);
-  res.json(subjects);
+app.get('/api/subjects/:userId', async (req, res) => {
+  try {
+    const subjects = await db.query('SELECT * FROM subjects WHERE user_id = $1', [req.params.userId]);
+    res.json(subjects.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.put('/api/subjects/:userId', (req, res) => {
+app.put('/api/subjects/:userId', async (req, res) => {
   const { subjects } = req.body;
   const userId = req.params.userId;
 
-  const upsert = db.prepare(`
-    INSERT INTO subjects (id, user_id, name, difficulty, exam_date, total_topics, completed_topics)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      name = excluded.name,
-      difficulty = excluded.difficulty,
-      exam_date = excluded.exam_date,
-      total_topics = excluded.total_topics,
-      completed_topics = excluded.completed_topics
-  `);
-
-  const runAll = db.transaction((items) => {
-    for (const s of items) {
-      upsert.run(s.id, userId, s.name, s.difficulty, s.exam_date, s.total_topics, s.completed_topics);
-    }
-  });
-
   try {
-    runAll(subjects);
+    for (const s of subjects) {
+      await db.query(`
+        INSERT INTO subjects (id, user_id, name, difficulty, exam_date, total_topics, completed_topics)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT(id) DO UPDATE SET
+          name = EXCLUDED.name,
+          difficulty = EXCLUDED.difficulty,
+          exam_date = EXCLUDED.exam_date,
+          total_topics = EXCLUDED.total_topics,
+          completed_topics = EXCLUDED.completed_topics
+      `, [s.id, userId, s.name, s.difficulty, s.exam_date, s.total_topics, s.completed_topics]);
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -94,36 +103,32 @@ app.put('/api/subjects/:userId', (req, res) => {
 // Tasks Routes
 // ==========================================
 
-app.get('/api/tasks/:userId', (req, res) => {
-  const tasks = db.prepare('SELECT * FROM tasks WHERE user_id = ?').all(req.params.userId);
-  // Convert SQLite integer booleans to JS booleans
-  const formatted = tasks.map(t => ({ ...t, completed: !!t.completed }));
-  res.json(formatted);
+app.get('/api/tasks/:userId', async (req, res) => {
+  try {
+    const tasks = await db.query('SELECT * FROM tasks WHERE user_id = $1', [req.params.userId]);
+    res.json(tasks.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.put('/api/tasks/:userId', (req, res) => {
+app.put('/api/tasks/:userId', async (req, res) => {
   const { tasks } = req.body;
   const userId = req.params.userId;
 
-  const upsert = db.prepare(`
-    INSERT INTO tasks (id, user_id, subject_id, topic_number, scheduled_date, completed, estimated_minutes)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      subject_id = excluded.subject_id,
-      topic_number = excluded.topic_number,
-      scheduled_date = excluded.scheduled_date,
-      completed = excluded.completed,
-      estimated_minutes = excluded.estimated_minutes
-  `);
-
-  const runAll = db.transaction((items) => {
-    for (const t of items) {
-      upsert.run(t.id, userId, t.subject_id, t.topic_number, t.scheduled_date, t.completed ? 1 : 0, t.estimated_minutes);
-    }
-  });
-
   try {
-    runAll(tasks);
+    for (const t of tasks) {
+      await db.query(`
+        INSERT INTO tasks (id, user_id, subject_id, topic_number, scheduled_date, completed, estimated_minutes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT(id) DO UPDATE SET
+          subject_id = EXCLUDED.subject_id,
+          topic_number = EXCLUDED.topic_number,
+          scheduled_date = EXCLUDED.scheduled_date,
+          completed = EXCLUDED.completed,
+          estimated_minutes = EXCLUDED.estimated_minutes
+      `, [t.id, userId, t.subject_id, t.topic_number, t.scheduled_date, t.completed, t.estimated_minutes]);
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -134,57 +139,68 @@ app.put('/api/tasks/:userId', (req, res) => {
 // Settings Routes
 // ==========================================
 
-app.get('/api/settings/:userId', (req, res) => {
-  const settings = db.prepare('SELECT * FROM settings WHERE user_id = ?').get(req.params.userId);
-  if (!settings) {
-    return res.json(null);
+app.get('/api/settings/:userId', async (req, res) => {
+  try {
+    const settings = await db.query('SELECT * FROM settings WHERE user_id = $1', [req.params.userId]);
+    if (settings.rows.length === 0) {
+      return res.json(null);
+    }
+    res.json(settings.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-  // Parse custom_holidays from JSON string
-  settings.custom_holidays = JSON.parse(settings.custom_holidays || '[]');
-  res.json(settings);
 });
 
-app.put('/api/settings/:userId', (req, res) => {
+app.put('/api/settings/:userId', async (req, res) => {
   const { settings } = req.body;
   const userId = req.params.userId;
-  const holidays = JSON.stringify(settings.custom_holidays || []);
 
-  db.prepare(`
-    INSERT INTO settings (user_id, hours_available_per_day, preferred_study_days_per_week, start_date, custom_holidays)
-    VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET
-      hours_available_per_day = excluded.hours_available_per_day,
-      preferred_study_days_per_week = excluded.preferred_study_days_per_week,
-      start_date = excluded.start_date,
-      custom_holidays = excluded.custom_holidays
-  `).run(userId, settings.hours_available_per_day, settings.preferred_study_days_per_week, settings.start_date, holidays);
-
-  res.json({ success: true });
+  try {
+    await db.query(`
+      INSERT INTO settings (user_id, hours_available_per_day, preferred_study_days_per_week, start_date, custom_holidays)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT(user_id) DO UPDATE SET
+        hours_available_per_day = EXCLUDED.hours_available_per_day,
+        preferred_study_days_per_week = EXCLUDED.preferred_study_days_per_week,
+        start_date = EXCLUDED.start_date,
+        custom_holidays = EXCLUDED.custom_holidays
+    `, [userId, settings.hours_available_per_day, settings.preferred_study_days_per_week, settings.start_date, JSON.stringify(settings.custom_holidays)]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ==========================================
 // Streaks Routes
 // ==========================================
 
-app.get('/api/streaks/:userId', (req, res) => {
-  const streak = db.prepare('SELECT * FROM streaks WHERE user_id = ?').get(req.params.userId);
-  res.json(streak || null);
+app.get('/api/streaks/:userId', async (req, res) => {
+  try {
+    const streak = await db.query('SELECT * FROM streaks WHERE user_id = $1', [req.params.userId]);
+    res.json(streak.rows[0] || null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.put('/api/streaks/:userId', (req, res) => {
+app.put('/api/streaks/:userId', async (req, res) => {
   const { streak } = req.body;
   const userId = req.params.userId;
 
-  db.prepare(`
-    INSERT INTO streaks (user_id, current_streak, longest_streak, last_study_date)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET
-      current_streak = excluded.current_streak,
-      longest_streak = excluded.longest_streak,
-      last_study_date = excluded.last_study_date
-  `).run(userId, streak.current_streak, streak.longest_streak, streak.last_study_date);
-
-  res.json({ success: true });
+  try {
+    await db.query(`
+      INSERT INTO streaks (user_id, current_streak, longest_streak, last_study_date)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT(user_id) DO UPDATE SET
+        current_streak = EXCLUDED.current_streak,
+        longest_streak = EXCLUDED.longest_streak,
+        last_study_date = EXCLUDED.last_study_date
+    `, [userId, streak.current_streak, streak.longest_streak, streak.last_study_date]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Start server
