@@ -34,36 +34,36 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 171 77% 44%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 213 31% 91%;
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 222 47% 7%;
-    --card-foreground: 213 31% 91%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 213 31% 91%;
+    --popover: 240 10% 4%;
+    --popover-foreground: 0 0% 98%;
 
     --primary: 171 77% 64%;
-    --primary-foreground: 222 47% 11%;
+    --primary-foreground: 240 10% 4%;
 
-    --secondary: 222 47% 15%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 10% 10%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 223 47% 20%;
-    --muted-foreground: 215.4 16.3% 66.9%;
+    --muted: 240 10% 12%;
+    --muted-foreground: 240 5% 65%;
 
     --accent: 171 77% 64%;
-    --accent-foreground: 222 47% 11%;
+    --accent-foreground: 240 10% 4%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 222 47% 18%;
-    --input: 222 47% 18%;
+    --border: 240 10% 15%;
+    --input: 240 10% 15%;
     --ring: 171 77% 64%;
   }
 }
@@ -73,17 +73,17 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased transition-colors duration-300;
+    @apply bg-background text-foreground font-sans antialiased transition-colors duration-500;
     font-family: 'Outfit', sans-serif;
   }
 }
 
 .glass-panel {
-  @apply bg-card/60 backdrop-blur-xl border border-foreground/5 shadow-2xl;
+  @apply bg-card/40 backdrop-blur-3xl border border-foreground/5 shadow-2xl;
 }
 
 .glass-card {
-  @apply bg-secondary/40 backdrop-blur-md border border-foreground/5 hover:border-primary/20 transition-all duration-300;
+  @apply bg-secondary/30 backdrop-blur-2xl border border-foreground/5 hover:border-primary/30 hover:bg-secondary/50 transition-all duration-500;
 }
 
 .sidebar-item-active {
@@ -98,8 +98,15 @@
   @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-foreground/10 rounded-full;
+  @apply bg-foreground/10 rounded-full hover:bg-foreground/20 transition-colors;
 }
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-foreground/20;
+
+/* Custom animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
 }
