@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { X } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
 export const AuthWindow: React.FC = () => {
@@ -48,84 +48,98 @@ export const AuthWindow: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <Card className="w-full max-w-md relative">
+    <div className="flex items-center justify-center min-h-screen bg-background relative overflow-hidden p-4">
+      {/* Background Decorative Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-mint/10 blur-[120px] rounded-full" />
+
+      <Card className="w-full max-w-md glass-panel rounded-[2.5rem] border-white/5 relative z-10 p-4 shadow-2xl">
         <button
           onClick={() => {
             localStorage.setItem('guest_mode', 'true');
             window.location.reload();
           }}
-          className="absolute right-4 top-4 p-2 rounded-full hover:bg-accent transition-colors"
+          className="absolute right-6 top-6 p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
           title="Close"
         >
           <X className="h-4 w-4" />
         </button>
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Study Spark</CardTitle>
-          <CardDescription className="text-center">Sign in to track your study progress across devices.</CardDescription>
+        
+        <CardHeader className="pt-8 text-center">
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 text-primary">
+            <Sparkles className="h-8 w-8" />
+          </div>
+          <CardTitle className="text-3xl font-bold tracking-tight">Study Spark</CardTitle>
+          <CardDescription className="text-muted-foreground mt-2">Precision planning for your academic success.</CardDescription>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="pb-8">
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-white/5 rounded-xl p-1 mb-6">
+              <TabsTrigger value="login" className="rounded-lg font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Login</TabsTrigger>
+              <TabsTrigger value="signup" className="rounded-lg font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sign Up</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4 pt-4">
-                <div className="space-y-2">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-4">
                   <Input
                     type="email"
-                    placeholder="Email"
+                    placeholder="Email Address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="bg-white/5 border-none h-12 rounded-xl px-4 font-medium"
                   />
                   <Input
                     type="password"
-                    placeholder="Password"
+                    placeholder="Security Key"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="bg-white/5 border-none h-12 rounded-xl px-4 font-medium"
                   />
                 </div>
-                <Button className="w-full" type="submit" disabled={loading}>
-                  {loading ? 'Logging in...' : 'Login'}
+                <Button className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform mt-2" type="submit" disabled={loading}>
+                  {loading ? 'Authenticating...' : 'Enter Dashboard'}
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4 pt-4">
-                <div className="space-y-2">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-4">
                   <Input
                     type="email"
-                    placeholder="Email"
+                    placeholder="Email Address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="bg-white/5 border-none h-12 rounded-xl px-4 font-medium"
                   />
                   <Input
                     type="password"
-                    placeholder="Password"
+                    placeholder="Create Security Key"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="bg-white/5 border-none h-12 rounded-xl px-4 font-medium"
                   />
                 </div>
-                <Button className="w-full" type="submit" disabled={loading}>
-                  {loading ? 'Signing up...' : 'Sign Up'}
+                <Button className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform mt-2" type="submit" disabled={loading}>
+                  {loading ? 'Creating Account...' : 'Initialize Profile'}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
-          <div className="mt-6 pt-6 border-t text-center">
-            <p className="text-sm text-muted-foreground mb-4">Just want to try it out?</p>
+
+          <div className="mt-8 pt-8 border-t border-white/5 text-center">
+            <p className="text-xs text-muted-foreground mb-4 font-medium uppercase tracking-widest">Alternative Access</p>
             <Button
-              variant="outline"
-              className="w-full"
+              variant="ghost"
+              className="w-full h-12 rounded-xl bg-white/5 hover:bg-white/10 font-bold"
               onClick={() => {
-                toast.info("Continuing as Guest. Your data will only be saved locally.");
+                toast.info("Continuing as Guest. Data remains local.");
                 localStorage.setItem('guest_mode', 'true');
                 window.location.reload();
               }}
