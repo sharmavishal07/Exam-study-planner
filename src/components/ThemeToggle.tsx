@@ -1,4 +1,4 @@
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Cloud } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -24,14 +24,20 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={() => {
+        if (theme === 'light') setTheme('comfort-blue');
+        else if (theme === 'comfort-blue') setTheme('dark');
+        else setTheme('light');
+      }}
       className="h-9 w-9 rounded-lg transition-colors border-none hover:bg-accent"
       title="Toggle theme"
     >
       {theme === "dark" ? (
-        <Sun className="h-5 w-5 text-yellow-500" />
+        <Moon className="h-5 w-5 text-primary" />
+      ) : theme === "comfort-blue" ? (
+        <Cloud className="h-5 w-5 text-primary" />
       ) : (
-        <Moon className="h-5 w-5 text-slate-700" />
+        <Sun className="h-5 w-5 text-yellow-500" />
       )}
     </Button>
   );
