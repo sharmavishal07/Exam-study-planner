@@ -36,7 +36,7 @@ export default function AppSidebar({ currentView, onViewChange, streak, onCreate
   return (
     <aside 
       className={cn(
-        "flex flex-col h-full bg-card border-r border-white/5 py-8 transition-all duration-500 ease-in-out z-50 overflow-hidden",
+        "flex flex-col h-full bg-card border-r border-white/5 py-8 transition-all duration-500 ease-in-out z-50",
         isExpanded ? "w-64 px-6" : "w-20 px-0 items-center"
       )}
     >
