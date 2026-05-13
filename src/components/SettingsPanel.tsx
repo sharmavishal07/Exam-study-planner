@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Sparkles, Calendar as CalendarIcon, Zap } from 'lucide-react';
+import { Sparkles, Calendar as CalendarIcon, CalendarClock } from 'lucide-react';
 
 interface SettingsPanelProps {
   settings: StudySettings;
@@ -27,7 +27,7 @@ export default function SettingsPanel({
     <div className="space-y-10 animate-fade-in max-w-2xl">
       <div>
         <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          <Zap className="h-6 w-6 text-primary fill-primary/20" />
+          <CalendarClock className="h-6 w-6 text-primary" />
           Time Table Generator
         </h2>
         <p className="text-sm text-muted-foreground mt-1">Configure your study algorithm parameters</p>
