@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
 const db = require('./database');
 
 const app = express();
@@ -35,7 +36,8 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     const id = uuidv4();
-    await db.query('INSERT INTO users (id, email, password) VALUES ($1, $2, $3)', [id, email, password]);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await db.query('INSERT INTO users (id, email, password) VALUES ($1, $2, $3)', [id, email, hashedPassword]);
 
     res.json({ id, email });
   } catch (err) {
@@ -52,12 +54,27 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   try {
-    const user = await db.query('SELECT id, email FROM users WHERE email = $1 AND password = $2', [email, password]);
-    if (user.rows.length === 0) {
+    const userResult = await db.query('SELECT id, email, password FROM users WHERE email = $1', [email]);
+    if (userResult.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    res.json(user.rows[0]);
+    const user = userResult.rows[0];
+    let isMatch = await bcrypt.compare(password, user.password);
+    
+    // Legacy support for plaintext passwords
+    if (!isMatch && password === user.password) {
+      isMatch = true;
+      // Upgrade the password in the database
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await db.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, user.id]);
+    }
+    
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    res.json({ id: user.id, email: user.email });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
