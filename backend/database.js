@@ -1,13 +1,27 @@
-const Database = require('better-sqlite3');
 const path = require('path');
 require('dotenv').config({ path: '../.env' });
 
-const dbPath = path.join(__dirname, 'data.db');
-const db = new Database(dbPath);
+const dbUrl = process.env.DATABASE_URL;
+let isPostgres = false;
+let pgPool = null;
+let sqliteDb = null;
 
-const initDb = () => {
-  try {
-    db.exec(`
+// Determine if we should use Supabase (Postgres) or local SQLite
+if (dbUrl && dbUrl.startsWith('postgres://') && !dbUrl.includes('[YOUR-PASSWORD]')) {
+  const { Pool } = require('pg');
+  pgPool = new Pool({
+    connectionString: dbUrl,
+    ssl: { rejectUnauthorized: false } // Required for external Supabase connections
+  });
+  isPostgres = true;
+} else {
+  const Database = require('better-sqlite3');
+  const dbPath = path.join(__dirname, 'data.db');
+  sqliteDb = new Database(dbPath);
+}
+
+const initDb = async () => {
+  const schema = `
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
@@ -58,24 +72,43 @@ const initDb = () => {
         content TEXT,
         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `);
-    console.log("  ✅ Local SQLite database initialized at " + dbPath);
+  `;
+
+  try {
+    if (isPostgres) {
+      await pgPool.query(schema);
+      console.log("  ✅ Connected to Cloud PostgreSQL (Supabase) Database");
+    } else {
+      sqliteDb.exec(schema);
+      console.log("  ✅ Connected to Local SQLite Database at data.db");
+    }
   } catch (err) {
     console.error("  ❌ Database initialization failed:", err);
   }
 };
 
 module.exports = {
-  query: (text, params = []) => {
-    // Convert $1, $2, $3 to ?
-    const sql = text.replace(/\$\d+/g, '?');
-    const stmt = db.prepare(sql);
-    if (sql.trim().toUpperCase().startsWith('SELECT')) {
-      const rows = stmt.all(params);
-      return { rows };
+  query: async (text, params = []) => {
+    if (isPostgres) {
+      // Postgres natively supports $1, $2, etc.
+      // Postgres natively returns rows
+      const result = await pgPool.query(text, params);
+      return { rows: result.rows, result };
     } else {
-      const result = stmt.run(params);
-      return { rows: [], result };
+      // Convert Postgres syntax $1, $2 to SQLite syntax ?, ?
+      const sql = text.replace(/\$\d+/g, '?');
+      const stmt = sqliteDb.prepare(sql);
+      
+      // Convert boolean params to 1/0 for SQLite compatibility if needed, though better-sqlite3 may handle it
+      const safeParams = params.map(p => typeof p === 'boolean' ? (p ? 1 : 0) : p);
+
+      if (sql.trim().toUpperCase().startsWith('SELECT')) {
+        const rows = stmt.all(safeParams);
+        return { rows };
+      } else {
+        const result = stmt.run(safeParams);
+        return { rows: [], result };
+      }
     }
   },
   initDb
